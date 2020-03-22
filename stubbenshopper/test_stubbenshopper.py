@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 
 # # Config
@@ -17,19 +18,45 @@ def send_request(endpoint, method, json_data, **kwargs):
     return response
 
 
-# # Signup
+# # Test1: reseller subscribe with feedback
 
-response = send_request('signup', 'POST', {'email':'john_doe@gmail.com', 'password':'password'})
-response.json()
+send_request(endpoint='subscribe', method='POST',
+             json_data={'email':'thibault.betremieux@port-neo.com',
+                        'user_category':'reseller', # OR "driver"
+                        'zip_code':'79108',
+                        'feedback':'wow this is really cool 🐓🐓! '}).json()
 
-# # Login
+# # Test2: driver subscribe without feedback
 
-response = send_request('login', 'POST', {'email':'john_doe@gmail.com', 'password':'password'})
-response = response.json()
-token = response['token']
-response
+send_request(endpoint='subscribe', method='POST',
+             json_data={'email':'thibault.betremieux@gmail.com', 
+                        'zip_code':'79108', 
+                        'user_category':'driver'}).json()
 
-# # Send info
+# # Error codes
 
-send_request('send_info', 'POST', {'favorite_color':'yello', 'favorite_fruit':'banana'},
-             headers={'Authorization': f'Bearer {token}'})
+# ## 405 no JSON
+
+send_request(endpoint='subscribe', method='POST', json_data=None).json()
+
+# ## 406 missing keys
+
+send_request(endpoint='subscribe', method='POST', json_data={'user_category':'driver'}).json()
+
+# ## 407 user_category must be "driver" or "reseller"
+
+send_request(endpoint='subscribe', method='POST', json_data={'email':'foobar@test.com', 
+                                                             'zip_code':'79108',
+                                                             'user_category':'banana'}).json()
+
+# # 408 already subscribed
+
+send_request(endpoint='subscribe', method='POST', json_data={'email':'thibault.betremieux@port-neo.com',
+                                                             'zip_code':'79108',
+                                                             'user_category':'driver'}).json()
+
+# ## 409 invalid email address
+
+send_request(endpoint='subscribe', method='POST', json_data={'email':'not_valid@@gmail.com',
+                                                             'zip_code':'79108',
+                                                             'user_category':'driver'}).json()
